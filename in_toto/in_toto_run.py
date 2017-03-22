@@ -94,7 +94,7 @@ def main():
 
   parser.usage = ("\n"
       "%(prog)s  --step-name <unique step name>\n{0}"
-               " --key <functionary private key path>\n{0}"
+               "[--key <functionary private key path>]\n{0}"
                "[--materials <filepath>[ <filepath> ...]]\n{0}"
                "[--products <filepath>[ <filepath> ...]]\n{0}"
                "[--record-byproducts]\n{0}"
@@ -113,7 +113,7 @@ def main():
   in_toto_args.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution")
 
-  in_toto_args.add_argument("-k", "--key", type=str, required=True,
+  in_toto_args.add_argument("-k", "--key", type=str, required=False,
       help="Path to private key to sign link metadata (PEM)")
 
   in_toto_args.add_argument("-b", "--record-byproducts",
@@ -136,11 +136,17 @@ def main():
 
   # We load the key here because it might prompt the user for a password in
   # case the key is encrypted. Something that should not happen in the library.
-  try:
-    key = util.prompt_import_rsa_key_from_file(args.key)
-  except Exception as e:
-    log.error("in load key - {}".format(args.key))
-    sys.exit(1)
+
+  if args.key:
+    try:
+      key = util.prompt_import_rsa_key_from_file(args.key)
+    except Exception as e:
+      log.error("in load key - {}".format(args.key))
+      sys.exit(1)
+  else:
+    key = False
+    log.warn("No signing key specified. The resulting"
+        " '.link' file will not be signed!")
 
   in_toto_run(args.step_name, args.materials, args.products,
       args.link_cmd, key, args.record_byproducts)

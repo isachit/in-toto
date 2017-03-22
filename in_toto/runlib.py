@@ -31,7 +31,8 @@ import fnmatch
 
 import in_toto.settings
 from in_toto import log
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT,
+    FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -399,6 +400,11 @@ def in_toto_run(name, material_list, product_list,
     log.info("Storing link metadata to '{}'...".format(
         FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])))
     link.dump(key=key)
+
+  else:
+    short_name = FILENAME_FORMAT_SHORT.format(step_name=name)
+    log.info("Storing unsigned link metadata to '{}'...".format(short_name))
+    link.dump(short_name)
 
   return link
 
