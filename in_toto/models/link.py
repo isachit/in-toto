@@ -26,6 +26,7 @@ import securesystemslib.formats
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 FILENAME_FORMAT_SHORT = "{step_name}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
+UNFINISHED_FILENAME_FORMAT_SHORT = ".{step_name}.link-unfinished"
 
 @attr.s(repr=False)
 class Link(models__common.Signable):
