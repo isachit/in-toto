@@ -32,7 +32,7 @@ import fnmatch
 import in_toto.settings
 from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT,
-    FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
+    FILENAME_FORMAT, FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_SHORT)
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -438,21 +438,35 @@ def in_toto_record_start(step_name, key, material_list):
 
   """
 
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.info("Start recording '{}'...".format(step_name))
 
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
+
   materials_dict = record_artifacts_as_dict(material_list)
 
   log.info("Creating preliminary link metadata...")
   link = create_link_metadata(step_name, materials_dict)
 
-  log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
-  link.sign(key)
+  if key:
+    unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
+        keyid=key["keyid"])
 
-  log.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
+    log.info("Signing link metadata with key '{:.8}...'..."
+        .format(key["keyid"]))
+    link.sign(key)
+
+    log.info("Storing preliminary link metadata to '{}'..."
+        .format(unfinished_fn))
+
+  else:
+    unfinished_fn = UNFINISHED_FILENAME_FORMAT_SHORT.format(step_name=step_name)
+    log.info("Storing unsigned preliminary link metadata to '{}'..."
+        .format(unfinished_fn))
+
   link.dump(filename=unfinished_fn)
+
+
 
 
 def in_toto_record_stop(step_name, key, product_list):
@@ -468,7 +482,7 @@ def in_toto_record_stop(step_name, key, product_list):
     step_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    key:
+    key:    (optional)
             Private key to sign link metadata.
             Format is securesystemslib.formats.KEY_SCHEMA
     product_list:
@@ -485,29 +499,40 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   """
-  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  if key:
+    fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+    unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(
+        step_name=step_name, keyid=key["keyid"])
+
+  else:
+    fn = FILENAME_FORMAT_SHORT.format(step_name=step_name)
+    unfinished_fn = UNFINISHED_FILENAME_FORMAT_SHORT.format(
+        step_name=step_name)
+
   log.info("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
   log.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
   link = in_toto.models.link.Link.read_from_file(unfinished_fn)
 
-  # The file must have been signed by the same key
-  log.info("Verifying preliminary link signature...")
-  keydict = {key["keyid"] : key}
-  link.verify_signatures(keydict)
+  if key:
+    # The file must have been signed by the same key
+    log.info("Verifying preliminary link signature...")
+    keydict = {key["keyid"] : key}
+    link.verify_signatures(keydict)
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
+
   link.products = record_artifacts_as_dict(product_list)
 
-  log.info("Updating signature with key '{:.8}...'...".format(key["keyid"]))
-  link.signatures = []
-  link.sign(key)
+  if key:
+    log.info("Updating signature with key '{:.8}...'...".format(key["keyid"]))
+    link.signatures = []
+    link.sign(key)
 
   log.info("Storing link metadata to '{}'...".format(fn))
-  link.dump(key=key)
+  link.dump(fn)
 
-  log.info("Removing unfinished link metadata '{}'...".format(fn))
+  log.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)

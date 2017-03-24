@@ -37,9 +37,9 @@
 
   Example Usage
   ```
-  in-toto-record --step-name edit-files start --materials . --key bob
+  in-toto-record --step-name edit-files start --materials . [--key bob]
   # Edit files manually ...
-  in-toto-record --step-name edit-files stop --products . --key bob
+  in-toto-record --step-name edit-files stop --products . [--key bob]
   ```
 
 """
@@ -130,7 +130,7 @@ def main():
   lpad = (len(parser.prog) + 1) * " "
   parser.usage = ("\n"
       "%(prog)s  --step-name <unique step name>\n{0}"
-               " --key <functionary private key path>\n"
+               "[--key <functionary private key path>]\n"
                "[--verbose]\n"
       "Commands:\n{0}"
                "start [--materials <filepath>[ <filepath> ...]]\n{0}"
@@ -142,7 +142,7 @@ def main():
   in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
-  in_toto_args.add_argument("-k", "--key", type=str, required=True,
+  in_toto_args.add_argument("-k", "--key", type=str, required=False,
       help="Path to private key to sign link metadata (PEM)")
 
   in_toto_args.add_argument("-v", "--verbose", dest='verbose',
@@ -162,11 +162,18 @@ def main():
 
   # We load the key here because it might prompt the user for a password in
   # case the key is encrypted. Something that should not happen in the library.
-  try:
-    key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
-  except Exception as e:
-    log.error("in load key - {}".format(args.key))
-    sys.exit(1)
+  if args.key:
+    try:
+      key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
+
+    except Exception as e:
+      log.error("in load key - {}".format(args.key))
+      sys.exit(1)
+
+  else:
+    key = False
+    log.warn("No signing key specified. The resulting"
+        " '.link' file will not be signed!")
 
   if args.command == "start":
     in_toto_record_start(args.step_name, key, args.materials)
