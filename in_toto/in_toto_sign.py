@@ -25,8 +25,8 @@
   supplied in the arguments.
 
   General Usage:
-  python in_toto_sign.py [sign | verify] <path/to/link/file> [-r] [-i] --keys
-  <path/to/key/file(s)>
+  python in_toto_sign.py [sign | verify] <path/to/link/file> [-r] [-i] [-d]
+  <path/to/the/dump/location> --keys <path/to/key/file(s)>
 
   Example Usage:
   Suppose Bob wants to sign a file called package.link, and also while signing,
@@ -276,7 +276,6 @@ def main():
 
         else:
           path = args.signablepath
-
 
       if signable_object._type == 'Link':
         if args.destination:
