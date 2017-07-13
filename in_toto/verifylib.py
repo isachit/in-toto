@@ -791,7 +791,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
     source_type:
             "materials" or "products" depending on whether the rules were in the
-            "material_matchrules" or "product_matchrules" field.
+            "expected_materials" or "expected_products" field.
 
     rules:
             The list of rules (material or product rules) for the item
@@ -926,10 +926,10 @@ def verify_all_item_rules(items, links):
 
     link = links[item.name]
     log.info("Verifying material rules for '{}'...".format(item.name))
-    verify_item_rules(item.name, "materials", item.material_matchrules, links)
+    verify_item_rules(item.name, "materials", item.expected_materials, links)
 
     log.info("Verifying product rules for '{}'...".format(item.name))
-    verify_item_rules(item.name, "products", item.product_matchrules, links)
+    verify_item_rules(item.name, "products", item.expected_products, links)
 
 
 def verify_threshold_constraints(layout, chain_link_dict):
@@ -1164,10 +1164,10 @@ def in_toto_verify(layout, layout_key_dict):
             will record materials before and products after command execution.
             For now it records everything in the current working directory.
         8.  Verify threshold constraints
-        9.  Verify rules defined in each Step's material_matchrules and
-            product_matchrules field.
-        10. Verify rules defined in each Inspection's material_matchrules and
-            product_matchrules field.
+        9.  Verify rules defined in each Step's expected_materials and
+            expected_products field.
+        10. Verify rules defined in each Inspection's expected_materials and
+            expected_products field.
 
     Note, this function will read the following files from disk:
       - link metadata files
